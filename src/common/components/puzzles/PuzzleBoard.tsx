@@ -50,6 +50,9 @@ function PuzzleBoard({
   const [ended, setEnded] = useState(false);
 
   const [pos] = positionFromFen(currentNode.fen);
+  const initialFen = puzzle?.fen || currentNode.fen;
+  const [initialPos] = positionFromFen(initialFen);
+  
 
   const treeIter = treeIteratorMainLine(root);
   treeIter.next();
@@ -63,15 +66,15 @@ function PuzzleBoard({
       }
     }
   }
-  const orientation = puzzle?.fen
-    ? Chess.fromSetup(parseFen(puzzle.fen).unwrap()).unwrap().turn === "white"
-      ? "black"
-      : "white"
-    : "white";
+  const turn = pos?.turn || "white";
+  let orientation = initialPos?.turn || "white";
+  if ((puzzle?.moves.length || 0) % 2 === 0) {
+    orientation = orientation === "white" ? "black" : "white";
+  }
+  
   const [pendingMove, setPendingMove] = useState<NormalMove | null>(null);
 
   const dests = pos ? chessgroundDests(pos) : new Map();
-  const turn = pos?.turn || "white";
   const showCoordinates = useAtomValue(showCoordinatesAtom);
 
   function checkMove(move: Move) {

@@ -6,6 +6,7 @@ import useSWRImmutable from "swr/immutable";
 import { commands, events, type PuzzleDatabaseInfo } from "@/bindings";
 import ProgressButton from "@/common/components/ProgressButton";
 import { getDefaultPuzzleDatabases } from "@/utils/db";
+import { type FileMetadata, type Directory } from "@/features/files/components/file";
 import { formatBytes, formatNumber } from "@/utils/format";
 import { getPuzzleDatabases } from "@/utils/puzzles";
 
@@ -14,11 +15,13 @@ function AddPuzzle({
   opened,
   setOpened,
   setPuzzleDbs,
+  files,
 }: {
   puzzleDbs: PuzzleDatabaseInfo[];
   opened: boolean;
   setOpened: (opened: boolean) => void;
   setPuzzleDbs: Dispatch<SetStateAction<PuzzleDatabaseInfo[]>>;
+  files: (FileMetadata | Directory)[] | undefined;
 }) {
   const { data: dbs, error } = useSWRImmutable("default_puzzle_databases", getDefaultPuzzleDatabases);
 
@@ -33,6 +36,7 @@ function AddPuzzle({
               key={i}
               setPuzzleDbs={setPuzzleDbs}
               initInstalled={puzzleDbs.some((e) => e.title === db.title)}
+              files={files}
             />
           ))}
           {error && (
@@ -51,11 +55,13 @@ function PuzzleDbCard({
   puzzleDb,
   databaseId,
   initInstalled,
+  files,
 }: {
   setPuzzleDbs: Dispatch<SetStateAction<PuzzleDatabaseInfo[]>>;
   puzzleDb: PuzzleDatabaseInfo & { downloadLink: string };
   databaseId: number;
   initInstalled: boolean;
+  files: (FileMetadata | Directory)[] | undefined;
 }) {
   const [inProgress, setInProgress] = useState<boolean>(false);
 
@@ -63,7 +69,7 @@ function PuzzleDbCard({
     setInProgress(true);
     const path = await resolve(await appDataDir(), "puzzles", `${name}.db3`);
     await commands.downloadFile(`puzzle_db_${id}`, url, path, null, null, null);
-    setPuzzleDbs(await getPuzzleDatabases());
+    setPuzzleDbs(await getPuzzleDatabases(files || []));
   }
 
   return (
